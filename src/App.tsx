@@ -18,38 +18,26 @@ function App() {
   }, []);
 
   const onChangeHandler = useCallback((excalidrawElements: ExcalidrawElement[]) => {
-    // 检查是否有实际变化（添加、删除、修改）
-    const hasRealChange = elements.length !== excalidrawElements.length ||
-      excalidrawElements.some(el => el.isDeleted) ||
-      elements.some((el, index) => {
-        const newEl = excalidrawElements[index];
-        return el.type !== newEl?.type || 
-               el.width !== newEl?.width || 
-               el.height !== newEl?.height ||
-               el.isDeleted !== newEl?.isDeleted;
-      });
-
-    if (hasRealChange) {
-      console.log('Elements actually changed:', excalidrawElements);
-      setElements([...excalidrawElements]);
+    const validElements = excalidrawElements.filter(el => !el.isDeleted);
+    
+    // 只在元素数量变化时输出日志
+    if (validElements.length !== elements.length) {
+      console.log('Elements count changed:', validElements.length);
     }
     
-    // 只在选中状态改变时更新
-    const newSelectedIds = excalidrawElements
+    setElements(validElements);
+    
+    // 更新选中状态（只考虑未删除的元素）
+    const newSelectedIds = validElements
       .filter(el => el.selected)
       .map(el => el.id);
     
-    if (JSON.stringify(newSelectedIds) !== JSON.stringify(selectedKeys)) {
-      setSelectedKeys(newSelectedIds);
-    }
-  }, [elements, selectedKeys, setElements]);
+    setSelectedKeys(newSelectedIds);
+  }, [elements.length, setElements]);
 
-  // 添加画板选择事件处理
+  // 修改选择事件处理器
   const onExcalidrawSelectionChange = useCallback((elements: readonly ExcalidrawElement[]) => {
-    const selectedIds = elements
-      .filter(el => el.selected)
-      .map(el => el.id);
-    setSelectedKeys(selectedIds);
+    // 不在这里处理选中状态，避免重复更新
   }, []);
 
   // 处理树节点选择
@@ -73,7 +61,6 @@ function App() {
 
   // 构建树形数据结构
   const treeData = useMemo(() => {
-    console.log('Rebuilding tree data with elements:', elements);
     const shapeTypes = {
       rectangle: '矩形',
       ellipse: '圆形',
@@ -119,7 +106,9 @@ function App() {
             initialData={{
               elements: elements,
               appState: {
-                viewBackgroundColor: "#121212"
+                viewBackgroundColor: "#121212",
+                currentItemStrokeColor: "#2f9e44",  // 设置默认边框颜
+                currentItemStrokeWidth: 2,  // 设置边框宽度
               }
             }}
           />
