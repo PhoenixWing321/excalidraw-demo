@@ -1,16 +1,11 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import debounce from 'lodash/debounce';  // 需要先安装 lodash: npm install lodash
-import { nanoid } from 'nanoid';  // 如果需要生成唯一ID
-
+import { useState, useCallback, useMemo } from 'react';
 import { Excalidraw } from "@excalidraw/excalidraw";
 import type { ExcalidrawElement, ExcalidrawAPIRefValue } from "@excalidraw/excalidraw/types";
-import { Tree } from 'antd';
-import { FolderOutlined, FileOutlined } from '@ant-design/icons';
-import { useShapeStore } from './stores/shape-store';
 import ShapeList from './components/ShapeList';  // 导入组件
 import ShapeTable from './components/ShapeTable';
-import MeasureButton from './components/MeasureButton';
-import SearchImageButton from './components/SearchImageButton';
+import { useMeasureStore } from './stores/measure-store';
+import { useShapeStore } from './stores/shape-store';
+import { Button } from 'antd';
 
 function App() {
   const { elements, setElements } = useShapeStore();
@@ -24,6 +19,10 @@ function App() {
     image: 0
   });
   const [tableElements, setTableElements] = useState<ExcalidrawElement[]>([]);
+
+  const measureCore = useMeasureStore(state => state.measureCore);
+  
+  measureCore.setExcalidrawAPI(excalidrawAPI);
 
   // 添加 onApiChange 回调函数
   const onApiChange = useCallback((api: ExcalidrawAPIRefValue) => {
@@ -66,6 +65,21 @@ function App() {
     // 不在这里处理选中状态，避免重复更新
   }, []);
 
+  // 添加一个 onMeasureImage 函数
+  const onMeasureImage = useCallback(() => {
+    // 在这里处理图像测量逻辑
+    measureCore.setElements(elements);
+    const result = measureCore.measure();
+    console.log('测量结果:', result);
+
+  })
+
+  const onSearchImages = useCallback(() => {
+    measureCore.setElements(elements);
+    measureCore.searchImageElements();
+    console.log('搜索结果:', measureCore.getImageElements()); 
+  });
+
   // 处理树节点选择
   const onSelect = (selectedKeys: string[], info: any) => {
     console.log('选中的节点:', selectedKeys);
@@ -85,65 +99,16 @@ function App() {
     }
   };
 
-  // 构建树形数据结构
-  const treeData = useMemo(() => {
-    const shapeTypes = {
-      rectangle: '矩形',
-      ellipse: '圆形',
-      diamond: '菱形',
-      line: '线条',
-      image: '图片'
-    };
-
-    const data = Object.entries(shapeTypes).map(([type, label]) => {
-      const shapes = elements.filter(el => !el.isDeleted && el.type === type);
-      return {
-        title: `${label} (${shapes.length})`,
-        key: type,
-        icon: <FolderOutlined />,
-        children: shapes.map(shape => ({
-          title: shape.customData?.title ||
-            `${shape.type}.${shapeCounter[shape.type]} - ${shape.width?.toFixed(0)}x${shape.height?.toFixed(0)}`,
-          key: shape.id,
-          icon: type === 'image' ? '🖼️' : <FileOutlined />
-        }))
-      };
-    }).filter(item => item.children.length > 0);
-
-    return data;
-  }, [elements, shapeCounter]);
-
-  // 在显示总数时也要过滤掉已删除的元素
-  const activeElementsCount = elements.filter(el => !el.isDeleted).length;
-
   const handleDisplayElementsChange = useCallback((elements: ExcalidrawElement[]) => {
     setTableElements(elements);
   }, []);
 
-  const handleMeasure = useCallback((measurements: Map<string, any>) => {
-    console.log('要测量的元素:', tableElements);  // 添加日志
-    const updatedElements = elements.map(el => {
-      const measurement = measurements.get(el.id);
-      if (measurement) {
-        return {
-          ...el,
-          customData: {
-            ...el.customData,
-            measurement
-          }
-        };
-      }
-      return el;
-    });
-    setElements(updatedElements);
-  }, [elements, setElements, tableElements]);
-
   return (
     <div className="app-container">
-      <div style={{ 
-        display: 'flex', 
+      <div style={{
+        display: 'flex',
         height: "70vh",
-        width: "100%" 
+        width: "100%"
       }}>
         <div style={{ flex: 1 }}>
           <Excalidraw
@@ -162,7 +127,7 @@ function App() {
             }}
           />
         </div>
-        <div style={{ 
+        <div style={{
           display: 'flex',
           flexDirection: 'column'
         }}>
@@ -172,13 +137,26 @@ function App() {
             shapeCounter={shapeCounter}
             onSelect={onSelect}
           />
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             flexDirection: 'column',  // 改为纵向排列
-            gap: '8px' 
+            gap: '8px'
           }}>
-            <SearchImageButton elements={elements} />
-            <MeasureButton selectedKeys={selectedKeys} />
+            <Button
+              type="default"
+              onClick={() => onSearchImages()}
+            >
+              {'搜索图片元素'}
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => onMeasureImage()}
+              disabled={measureCore.getImageCount() < 1}
+            >
+              {measureCore.getImageCount() > 0
+                ? `测量图像 [数量:${measureCore.getImageCount()}]`
+                : `(请选图像)`}
+            </Button>
           </div>
         </div>
       </div>

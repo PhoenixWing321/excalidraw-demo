@@ -32,10 +32,15 @@ export class MeasureCore {
     getImageElements() {
         return this.imageElements;
     }
+
+    getImageCount() {
+        return this.imageElements.length;
+    }
+
     // 搜索图片元素
-    searchImageElements(elements: ExcalidrawElement[]) {
+    searchImageElements() {
         this.clearImageElements();
-        elements.forEach(element => {
+        this.elements.forEach(element => {
             if (MeasureCore.isImageElement(element)) {
                 this.addImageElement(element);
             }
@@ -139,5 +144,18 @@ export class MeasureCore {
     // 其他辅助方法
     static isImageElement(element: ExcalidrawElement): element is ExcalidrawImageElement {
         return element.type === 'image' && !element.isDeleted;
+    }
+
+    // set elements
+    setElements(elements: ExcalidrawElement[]) {
+        this.elements = elements;
+    }
+
+    setExcalidrawAPI(excalidrawAPI: ExcalidrawAPIRefValue | null) {
+        this.excalidrawAPI = excalidrawAPI;
+    }
+
+    setImageElements(imageElements: ExcalidrawImageElement[]) {
+        this.imageElements = imageElements;
     }
 } 
