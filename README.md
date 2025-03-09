@@ -1,6 +1,13 @@
 # Vite + React + TypeScript 项目搭建指南
+## 引用
+
+- [命名规范](./doc/stadards.md)
+
+
+## 步骤
 
 以下是创建 **React + Vite + TypeScript** 项目的完整步骤（项目名 `excalidraw-demo-vite`）：
+
 
 ---
 
@@ -223,4 +230,4 @@ npm install
 npm install @excalidraw/excalidraw
 ```
 
-这样应该就能解决依赖冲突的问题了。如果您还有其他问题，请随时询问。
+
