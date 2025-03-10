@@ -137,7 +137,7 @@ const ShapeTable: FC<ShapeTableProps> = ({
           selectedRowKeys: selectedKeys,
           onChange: (selectedRowKeys) => onSelect(selectedRowKeys as string[]),
         }}
-        scroll={{ y: 400 }}
+        scroll={{ y: 400, x: 'max-content' }}
       />
     </div>
   );
